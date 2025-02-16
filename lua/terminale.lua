@@ -3,6 +3,7 @@ _G.floating = require("utils.floating")
 local M = {}
 
 M.setup = function()
+	-- WARN: this is only for testing purposes
 	floating.create({
 		win_config = {
 			relative = "editor",
