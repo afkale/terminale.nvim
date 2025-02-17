@@ -11,18 +11,19 @@ local buffer = require("utils.buffer")
 --- @field show_window fun(index: number|nil)
 
 --- @class terminale.utils.floating.FloatingConfig
---- @field win_config vim.api.keyset.win_config
 --- @field buf number|nil
---- @field on_enter fun(window: terminale.utils.floating.Window)|nil
+--- @field win number|nil
+--- @field window_theme terminale.utils.theme.WindowTheme
+--- @field on_enter fun(window: terminale.utils.floating.Window):nil
 
 --- @class terminale.utils.floating.Window
 --- @field buf number
 --- @field win number
 --- @field index number
 --- @field win_config vim.api.keyset.win_config
---- @field hide fun(self)|nil
---- @field show fun(self)|nil
---- @field close fun(self)|nil
+--- @field hide fun(self):nil
+--- @field show fun(self):nil
+--- @field close fun(self):nil
 
 ---@type terminale.utils.floating.Floating
 local M = {
@@ -36,7 +37,7 @@ local M = {
 M.create = function(config)
 	-- Create window and buffer
 	local buf = buffer.create(config.buf)
-	local win = vim.api.nvim_open_win(buf, true, config.win_config)
+	local win = vim.api.nvim_open_win(buf, true, config.window_theme.win_config)
 
 	-- Add the window to the list and get its index
 	local index = #M.windows + 1
@@ -46,7 +47,7 @@ M.create = function(config)
 		buf = buf,
 		win = win,
 		index = index,
-		win_config = config.win_config,
+		win_config = config.window_theme.win_config,
 		hide = function(self)
 			if vim.api.nvim_win_is_valid(self.win) then
 				vim.api.nvim_win_hide(self.win)
