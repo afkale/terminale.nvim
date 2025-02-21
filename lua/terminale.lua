@@ -18,6 +18,18 @@ M.setup = function(user_opts)
 				},
 			},
 		},
+		term = {
+			hidden = true,
+			window_theme = require("utils.theme").default_window_theme(),
+			user_command = "Term",
+			keymap = {
+				{
+					cmd = "<A-1>",
+					mode = { "i", "n", "t" },
+					key = "<CMD>Term<CR>",
+				},
+			},
+		},
 	}, opts)
 
 	local floating = require("utils.floating")
@@ -27,7 +39,11 @@ M.setup = function(user_opts)
 			hidden = config.hidden,
 			window_theme = config.window_theme,
 			on_create = function(window)
-				vim.fn.termopen(config.command, { on_exit = function() window:close() end })
+				if config.command then
+					vim.fn.termopen(config.command, { on_exit = function() window:close() end })
+				else
+					vim.cmd("term")
+				end
 			end,
 			on_enter = function() vim.cmd("startinsert") end,
 		})
