@@ -51,10 +51,12 @@ setmetatable(M.windows, { __mode = "v" })
 --- @param config terminale.utils.floating.FloatingConfig
 --- @return terminale.utils.floating.Window
 M.create = function(config)
+	config.focus = config.focus == nil and true or config.focus
+	config.hidden = config.hidden == nil and false or config.hidden
 	return {
 		buf = config.buf,
-		focus = config.focus or true,
-		hidden = config.hidden or false,
+		focus = config.focus,
+		hidden = config.hidden,
 		created = not config.hidden,
 		win_config = config.window_theme.win_config,
 		on_create = config.on_create or function() end,
