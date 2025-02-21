@@ -21,14 +21,16 @@ local buffer = require("utils.buffer")
 --- @class terminale.utils.floating.Window
 --- @field buf? number
 --- @field win? number
---- @field index number
+--- @field index? number
 --- @field win_config vim.api.keyset.win_config
 --- @field on_enter fun(self):nil
 --- @field on_create fun(self):nil
 --- @field hide fun(self):nil
+--- @field toggle fun(self):nil
 --- @field show fun(self):nil
 --- @field close fun(self):nil
 --- @field build fun(self):nil
+--- @field exists fun(self):boolean
 
 ---@type terminale.utils.floating.Floating
 local M = {
@@ -40,17 +42,17 @@ local M = {
 --- @param config terminale.utils.floating.FloatingConfig
 --- @return terminale.utils.floating.Window
 M.create = function(config)
-	-- Add the window to the list and get its index
-	local index = #M.windows + 1
-
 	--- @type terminale.utils.floating.Window
 	local window = {
-		index = index,
+		buf = config.buf,
 		hidden = config.hidden or false,
 		on_create = config.on_create or function() end,
 		on_enter = config.on_enter or function() end,
 		created = not config.hidden,
 		win_config = config.window_theme.win_config,
+		exists = function(self)
+			return M.windows[self.index] ~= nil
+		end,
 		hide = function(self)
 			-- Check if the buffer is already hidden, if is hidden just drop it.
 			if self.hidden then return end
@@ -101,27 +103,36 @@ M.create = function(config)
 				table.remove(M.windows, self.index)
 			end
 
+
 			-- Update last_index
-			M.last_index = #M.windows
+			if M.last_index == self.index then
+				M.last_index = #M.windows
+			end
+
+			-- Destroy window index.
+			self.index = nil
 		end,
 		build = function(self)
-			self.buf = buffer.create(config.buf)
-			self.win = not config.hidden and vim.api.nvim_open_win(self.buf, true, config.window_theme.win_config) or -1
+			-- Add the window to the list and get its index
+			self.index = #M.windows + 1
+
+			self.buf = buffer.create(self.buf)
+			self.win = not self.hidden and vim.api.nvim_open_win(self.buf, true, self.win_config) or -1
 
 			-- Execute on_enter and on_create methods
 			if self.created then
 				self.on_create(self)
 				self.on_enter(self)
 			end
+
+			-- Save the window state and the the index as last_index_index
+			M.last_index = self.index
+			M.windows[self.index] = self
 		end
 	}
 
 	-- Build window
 	window:build()
-
-	-- Save the window state and the the index as last_index_index
-	M.last_index = index
-	M.windows[index] = window
 
 	return window
 end
