@@ -12,7 +12,7 @@ M.setup = function(user_opts)
 			user_command = "Lazygit",
 			keymap = {
 				{
-					cmd = "<A-t>",
+					cmd = "<A-g>",
 					mode = { "i", "n", "t" },
 					key = "<CMD>Lazygit<CR>",
 				},

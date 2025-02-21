@@ -10,6 +10,7 @@ local buffer = require("utils.buffer")
 --- @field close_window fun(index: number|nil)
 --- @field toggle_window fun(index: number|nil)
 --- @field show_window fun(index: number|nil)
+--- @field toggle_or_setup fun(window: terminale.utils.floating.Window)
 
 --- @class terminale.utils.floating.FloatingConfig
 --- @field buf? number
@@ -62,7 +63,7 @@ M.create = function(config)
 		on_create = config.on_create or function() end,
 		on_enter = config.on_enter or function() end,
 		exists = function(self)
-			return M.windows[self.index] ~= nil
+			return self.index and M.windows[self.index]
 		end,
 		hide = function(self)
 			-- Check if the buffer is already hidden, if is hidden just drop it.
@@ -208,6 +209,17 @@ M.show_window = function(index)
 
 	if not M.is_window_valid(index) then return end
 	M.windows[index]:show()
+end
+
+--- Function to toggle or setup a window.
+--- @param window? terminale.utils.floating.Window
+M.toggle_or_setup = function(window)
+	if window:exists() then
+		window:toggle()
+	else
+		window:setup()
+		window:show()
+	end
 end
 
 return M
