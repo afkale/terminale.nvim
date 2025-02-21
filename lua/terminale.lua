@@ -1,35 +1,48 @@
 local M = {}
 
-M.setup = function()
-	-- WARN: this is only for testing purposes
-	_G.floating = require("utils.floating")
-	local theme = require("utils.theme")
+M.setup = function(user_opts)
+	local opts = user_opts or {}
 
-	local window = floating.create({
-		hidden = true,
-		window_theme = theme.default_window_theme(),
-		on_create = function(window)
-			vim.keymap.set({ "n", "i" }, "<C-h>", function() window:hide() end,
-				{ buffer = window.buf, noremap = true, silent = true })
-			vim.keymap.set({ "n", "i" }, "<C-x>", function() window:close() end,
-				{ buffer = window.buf, noremap = true, silent = true })
+	-- Default options with a flexible configuration for multiple commands
+	opts = vim.tbl_deep_extend("force", {
+		lazygit = {
+			hidden = true,
+			window_theme = require("utils.theme").default_window_theme(),
+			command = "lazygit",
+			user_command = "Lazygit",
+			keymap = {
+				{
+					cmd = "<A-t>",
+					mode = { "i", "n", "t" },
+					key = "<CMD>Lazygit<CR>",
+				},
+			},
+		},
+	}, opts)
 
-			vim.fn.termopen("lazygit", { on_exit = function() window:close() end })
-		end,
-		on_enter = function() vim.cmd("startinsert") end
-	})
+	local floating = require("utils.floating")
 
-	local toggle_lazyvim = function()
-		if window:exists() then
-			window:toggle()
-		else
-			window:setup()
-			window:show()
+	for _, config in pairs(opts) do
+		local window = floating.create({
+			hidden = config.hidden,
+			window_theme = config.window_theme,
+			on_create = function(window)
+				vim.fn.termopen(config.command, { on_exit = function() window:close() end })
+			end,
+			on_enter = function() vim.cmd("startinsert") end,
+		})
+
+		vim.api.nvim_create_user_command(config.user_command, function()
+			floating.toggle_or_setup(window)
+		end, {})
+
+		for _, keymap in ipairs(config.keymap) do
+			vim.keymap.set(keymap.mode, keymap.cmd, keymap.key, {
+				noremap = true,
+				silent = true,
+			})
 		end
 	end
-
-	vim.api.nvim_create_user_command("Lazygit2", toggle_lazyvim, {})
-	vim.keymap.set({ "n", "t" }, "<A-t>", "<CMD>Lazygit2<CR>", { noremap = true, silent = true })
 end
 
 return M
