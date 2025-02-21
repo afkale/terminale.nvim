@@ -8,12 +8,14 @@ local buffer = require("utils.buffer")
 --- @field is_window_valid fun(index: number): boolean
 --- @field hide_window fun(index: number|nil)
 --- @field close_window fun(index: number|nil)
+--- @field toggle_window fun(index: number|nil)
 --- @field show_window fun(index: number|nil)
 
 --- @class terminale.utils.floating.FloatingConfig
 --- @field buf? number
 --- @field win? number
 --- @field hidden? boolean
+--- @field focus? boolean
 --- @field window_theme terminale.utils.theme.WindowTheme
 --- @field on_enter? fun(window: terminale.utils.floating.Window):nil
 --- @field on_create? fun(window: terminale.utils.floating.Window):nil
@@ -22,6 +24,9 @@ local buffer = require("utils.buffer")
 --- @field buf? number
 --- @field win? number
 --- @field index? number
+--- @field focus boolean
+--- @field hidden boolean
+--- @field created boolean
 --- @field win_config vim.api.keyset.win_config
 --- @field on_enter fun(self):nil
 --- @field on_create fun(self):nil
@@ -29,7 +34,7 @@ local buffer = require("utils.buffer")
 --- @field toggle fun(self):nil
 --- @field show fun(self):nil
 --- @field close fun(self):nil
---- @field build fun(self):nil
+--- @field setup fun(self):nil
 --- @field exists fun(self):boolean
 
 ---@type terminale.utils.floating.Floating
@@ -38,18 +43,22 @@ local M = {
 	last_index = -1
 }
 
+-- This will remove the unavailable instances of windows stored in the windows state.
+setmetatable(M.windows, { __mode = "v" })
+
+
 --- This method should create a floating window.
 --- @param config terminale.utils.floating.FloatingConfig
 --- @return terminale.utils.floating.Window
 M.create = function(config)
-	--- @type terminale.utils.floating.Window
-	local window = {
+	return {
 		buf = config.buf,
+		focus = config.focus or true,
 		hidden = config.hidden or false,
-		on_create = config.on_create or function() end,
-		on_enter = config.on_enter or function() end,
 		created = not config.hidden,
 		win_config = config.window_theme.win_config,
+		on_create = config.on_create or function() end,
+		on_enter = config.on_enter or function() end,
 		exists = function(self)
 			return M.windows[self.index] ~= nil
 		end,
@@ -71,7 +80,7 @@ M.create = function(config)
 			-- Check if the buffer associated with the window is still valid
 			if vim.api.nvim_buf_is_valid(self.buf) then
 				-- If the window is not already created (e.g., hidden and never shown), open it with the saved configuration
-				self.win = vim.api.nvim_open_win(self.buf, true, self.win_config)
+				self.win = vim.api.nvim_open_win(self.buf, self.focus, self.win_config)
 
 				-- If the window was never shown before (meaning 'created' is false), we will execute on_create callback
 				if not self.created then
@@ -103,16 +112,20 @@ M.create = function(config)
 				table.remove(M.windows, self.index)
 			end
 
-
 			-- Update last_index
 			if M.last_index == self.index then
-				M.last_index = #M.windows
+				if #M.windows == 0 then
+					M.last_index = -1 -- No windows left
+				else
+					-- Update last_index to point to a valid window
+					M.last_index = math.min(M.last_index, #M.windows)
+				end
 			end
 
 			-- Destroy window index.
 			self.index = nil
 		end,
-		build = function(self)
+		setup = function(self)
 			-- Add the window to the list and get its index
 			self.index = #M.windows + 1
 
@@ -130,11 +143,6 @@ M.create = function(config)
 			M.windows[self.index] = self
 		end
 	}
-
-	-- Build window
-	window:build()
-
-	return window
 end
 
 

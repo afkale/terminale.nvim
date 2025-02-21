@@ -23,13 +23,13 @@ M.setup = function()
 		if window:exists() then
 			window:toggle()
 		else
-			window:build()
+			window:setup()
 			window:show()
 		end
 	end
 
 	vim.api.nvim_create_user_command("Lazygit2", toggle_lazyvim, {})
-	vim.keymap.set({ "i", "n", "t" }, "<A-t>", "<CMD>Lazygit2<CR>", { noremap = true, silent = true })
+	vim.keymap.set({ "n", "t" }, "<A-t>", "<CMD>Lazygit2<CR>", { noremap = true, silent = true })
 end
 
 return M
