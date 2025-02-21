@@ -5,8 +5,7 @@ M.setup = function()
 	_G.floating = require("utils.floating")
 	local theme = require("utils.theme")
 
-	-- local lazygit = function()
-	floating.create({
+	local window = floating.create({
 		window_theme = theme.default_window_theme(),
 		on_create = function(window)
 			vim.keymap.set({ "n", "i" }, "<C-h>", function() window:hide() end,
@@ -16,11 +15,12 @@ M.setup = function()
 
 			vim.fn.termopen("lazygit", { on_exit = function() window:close() end })
 		end,
-		on_enter = function()
-			vim.cmd("startinsert")
-		end
+		on_enter = function() vim.cmd("startinsert") end
 	})
-	-- end
+
+	local toggle_lazvim = function()
+
+	end
 end
 
 return M

@@ -2,9 +2,9 @@ local buffer = require("utils.buffer")
 
 --- @class terminale.utils.floating.Floating
 --- @field windows terminale.utils.floating.Window[]
---- @field last number
+--- @field last_index number
 --- @field create fun(config: terminale.utils.floating.FloatingConfig): terminale.utils.floating.Window
---- @field get_last_window fun(): terminale.utils.floating.Window|nil
+--- @field get_last_index_window fun(): terminale.utils.floating.Window|nil
 --- @field is_window_valid fun(index: number): boolean
 --- @field hide_window fun(index: number|nil)
 --- @field close_window fun(index: number|nil)
@@ -19,48 +19,53 @@ local buffer = require("utils.buffer")
 --- @field on_create? fun(window: terminale.utils.floating.Window):nil
 
 --- @class terminale.utils.floating.Window
---- @field buf number
---- @field win number
+--- @field buf? number
+--- @field win? number
 --- @field index number
 --- @field win_config vim.api.keyset.win_config
+--- @field on_enter fun(self):nil
+--- @field on_create fun(self):nil
 --- @field hide fun(self):nil
 --- @field show fun(self):nil
 --- @field close fun(self):nil
+--- @field build fun(self):nil
 
 ---@type terminale.utils.floating.Floating
 local M = {
 	windows = {},
-	last = -1
+	last_index = -1
 }
 
 --- This method should create a floating window.
 --- @param config terminale.utils.floating.FloatingConfig
 --- @return terminale.utils.floating.Window
 M.create = function(config)
-	-- Create window and buffer
-	local buf = buffer.create(config.buf)
-	local win = not config.hidden and vim.api.nvim_open_win(buf, true, config.window_theme.win_config) or -1
-	local on_enter = config.on_enter or function() end
-	local on_create = config.on_create or function() end
-
 	-- Add the window to the list and get its index
 	local index = #M.windows + 1
 
 	--- @type terminale.utils.floating.Window
 	local window = {
-		buf = buf,
-		win = win,
 		index = index,
 		hidden = config.hidden or false,
+		on_create = config.on_create or function() end,
+		on_enter = config.on_enter or function() end,
 		created = not config.hidden,
 		win_config = config.window_theme.win_config,
 		hide = function(self)
+			-- Check if the buffer is already hidden, if is hidden just drop it.
+			if self.hidden then return end
+
+			-- Hide the window if its valid.
 			if vim.api.nvim_win_is_valid(self.win) then
 				vim.api.nvim_win_hide(self.win)
-				self.hidden = true
 			end
+
+			self.hidden = true
 		end,
 		show = function(self)
+			-- Check if the buffer is hidden, if is not hidden just drop it.
+			if not self.hidden then return end
+
 			-- Check if the buffer associated with the window is still valid
 			if vim.api.nvim_buf_is_valid(self.buf) then
 				-- If the window is not already created (e.g., hidden and never shown), open it with the saved configuration
@@ -68,24 +73,19 @@ M.create = function(config)
 
 				-- If the window was never shown before (meaning 'created' is false), we will execute on_create callback
 				if not self.created then
-					on_create(self) -- Execute the user-defined or default 'on_create' function
+					self.on_create(self) -- Execute the user-defined or default 'on_create' function
 					self.created = true -- Mark that the window has been created (so 'on_create' doesn't run again)
 				end
 
 				-- Perform actions when the user enters the floating window by calling the 'on_enter' callback
-				on_enter(self)
+				self.on_enter(self)
 
 				-- Change the 'hidden' status to false since the window is now visible
 				self.hidden = false
 			end
 		end,
-
 		toggle = function(self)
-			if self.hidden then
-				self:show()
-			else
-				self:hide()
-			end
+			if self.hidden then self:show() else self:hide() end
 		end,
 		close = function(self)
 			-- Close the window and delete the buffer
@@ -101,19 +101,26 @@ M.create = function(config)
 				table.remove(M.windows, self.index)
 			end
 
-			-- Update last
-			M.last = #M.windows
+			-- Update last_index
+			M.last_index = #M.windows
+		end,
+		build = function(self)
+			self.buf = buffer.create(config.buf)
+			self.win = not config.hidden and vim.api.nvim_open_win(self.buf, true, config.window_theme.win_config) or -1
+
+			-- Execute on_enter and on_create methods
+			if self.created then
+				self.on_create(self)
+				self.on_enter(self)
+			end
 		end
 	}
 
-	-- Execute on_enter method
-	if window.created then
-		on_create(window)
-		on_enter(window)
-	end
+	-- Build window
+	window:build()
 
-	-- Save the window state and the the index as last_index
-	M.last = index
+	-- Save the window state and the the index as last_index_index
+	M.last_index = index
 	M.windows[index] = window
 
 	return window
@@ -130,44 +137,53 @@ M.is_window_valid = function(index)
 		return true
 	else
 		vim.notify(
-			"Warning: Invalid window state!",
-			vim.log.levels.WARN,
+			"ERROR: Invalid window state!",
+			vim.log.levels.ERROR,
 			{ title = "Floating Window Error", timeout = 5000 }
 		)
 		return false
 	end
 end
 
---- Return the last window used.
+--- Return the last_index window used.
 --- @return terminale.utils.floating.Window|nil
-M.get_last_window = function()
-	if not M.is_window_valid(M.last) then return end
+M.get_last_index_window = function()
+	if not M.is_window_valid(M.last_index) then return end
 
-	return M.windows[M.last]
+	return M.windows[M.last_index]
 end
 
---- Function to close a window by default this method should close the last window opened.
---- @param index number|nil
+--- Function to toggle a window by default this method should toggle the last_index window opened.
+--- @param index? number
+M.toggle_window = function(index)
+	index = index or M.last_index
+
+	if not M.is_window_valid(index) then return end
+	M.windows[index]:toggle()
+end
+
+--- Function to close a window by default this method should close the last_index window opened.
+--- @param index? number
 M.close_window = function(index)
-	index = index or M.last
+	index = index or M.last_index
 
 	if not M.is_window_valid(index) then return end
 	M.windows[index]:close()
 end
 
---- Function to hide a window by default this method should hide the last window opened.
---- @param index number|nil
+--- Function to hide a window by default this method should hide the last_index window opened.
+--- @param index? number
 M.hide_window = function(index)
-	index = index or M.last
+	index = index or M.last_index
 
 	if not M.is_window_valid(index) then return end
 	M.windows[index]:hide()
 end
 
---- Function to show a window by default this method should show the last window opened.
---- @param index number|nil
+--- Function to show a window by default this method should show the last_index window opened.
+--- @param index? number
 M.show_window = function(index)
-	index = index or M.last
+	index = index or M.last_index
 
 	if not M.is_window_valid(index) then return end
 	M.windows[index]:show()
