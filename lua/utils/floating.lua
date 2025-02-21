@@ -107,7 +107,10 @@ M.create = function(config)
 	}
 
 	-- Execute on_enter method
-	if window.created then on_create(window) end
+	if window.created then
+		on_create(window)
+		on_enter(window)
+	end
 
 	-- Save the window state and the the index as last_index
 	M.last = index
@@ -139,6 +142,7 @@ end
 --- @return terminale.utils.floating.Window|nil
 M.get_last_window = function()
 	if not M.is_window_valid(M.last) then return end
+
 	return M.windows[M.last]
 end
 
