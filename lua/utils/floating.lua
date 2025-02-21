@@ -11,10 +11,12 @@ local buffer = require("utils.buffer")
 --- @field show_window fun(index: number|nil)
 
 --- @class terminale.utils.floating.FloatingConfig
---- @field buf number|nil
---- @field win number|nil
+--- @field buf? number
+--- @field win? number
+--- @field hidden? boolean
 --- @field window_theme terminale.utils.theme.WindowTheme
---- @field on_enter fun(window: terminale.utils.floating.Window):nil
+--- @field on_enter? fun(window: terminale.utils.floating.Window):nil
+--- @field on_create? fun(window: terminale.utils.floating.Window):nil
 
 --- @class terminale.utils.floating.Window
 --- @field buf number
@@ -37,7 +39,9 @@ local M = {
 M.create = function(config)
 	-- Create window and buffer
 	local buf = buffer.create(config.buf)
-	local win = vim.api.nvim_open_win(buf, true, config.window_theme.win_config)
+	local win = not config.hidden and vim.api.nvim_open_win(buf, true, config.window_theme.win_config) or -1
+	local on_enter = config.on_enter or function() end
+	local on_create = config.on_create or function() end
 
 	-- Add the window to the list and get its index
 	local index = #M.windows + 1
@@ -47,15 +51,40 @@ M.create = function(config)
 		buf = buf,
 		win = win,
 		index = index,
+		hidden = config.hidden or false,
+		created = not config.hidden,
 		win_config = config.window_theme.win_config,
 		hide = function(self)
 			if vim.api.nvim_win_is_valid(self.win) then
 				vim.api.nvim_win_hide(self.win)
+				self.hidden = true
 			end
 		end,
 		show = function(self)
+			-- Check if the buffer associated with the window is still valid
 			if vim.api.nvim_buf_is_valid(self.buf) then
+				-- If the window is not already created (e.g., hidden and never shown), open it with the saved configuration
 				self.win = vim.api.nvim_open_win(self.buf, true, self.win_config)
+
+				-- If the window was never shown before (meaning 'created' is false), we will execute on_create callback
+				if not self.created then
+					on_create(self) -- Execute the user-defined or default 'on_create' function
+					self.created = true -- Mark that the window has been created (so 'on_create' doesn't run again)
+				end
+
+				-- Perform actions when the user enters the floating window by calling the 'on_enter' callback
+				on_enter(self)
+
+				-- Change the 'hidden' status to false since the window is now visible
+				self.hidden = false
+			end
+		end,
+
+		toggle = function(self)
+			if self.hidden then
+				self:show()
+			else
+				self:hide()
 			end
 		end,
 		close = function(self)
@@ -64,7 +93,7 @@ M.create = function(config)
 				vim.api.nvim_win_close(self.win, true)
 			end
 			if vim.api.nvim_buf_is_valid(self.buf) then
-				vim.api.nvim_buf_delete(self.buf, {})
+				vim.api.nvim_buf_delete(self.buf, { force = true })
 			end
 
 			-- Remove window from M.windows using the provided index
@@ -78,9 +107,7 @@ M.create = function(config)
 	}
 
 	-- Execute on_enter method
-	local on_enter = config.on_enter or function() end
-	on_enter(window)
-
+	if window.created then on_create(window) end
 
 	-- Save the window state and the the index as last_index
 	M.last = index
@@ -95,15 +122,17 @@ end
 --- @return boolean
 M.is_window_valid = function(index)
 	local window = M.windows[index]
-	local is_window_valid = window and vim.api.nvim_win_is_valid(window.win) and vim.api.nvim_buf_is_valid(window.buf)
-	if not is_window_valid then
+
+	if window and vim.api.nvim_buf_is_valid(window.buf) then
+		return true
+	else
 		vim.notify(
 			"Warning: Invalid window state!",
 			vim.log.levels.WARN,
 			{ title = "Floating Window Error", timeout = 5000 }
 		)
+		return false
 	end
-	return is_window_valid
 end
 
 --- Return the last window used.
