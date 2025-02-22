@@ -212,7 +212,7 @@ M.show_window = function(index)
 end
 
 --- Function to toggle or setup a window.
---- @param window? terminale.utils.floating.Window
+--- @param window terminale.utils.floating.Window
 M.toggle_or_setup = function(window)
 	if window:exists() then
 		window:toggle()

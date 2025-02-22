@@ -10,11 +10,32 @@ M.setup = function(user_opts)
 			window_theme = require("utils.theme").default_window_theme(),
 			command = "lazygit",
 			user_command = "Lazygit",
+			on_create = function(window)
+				vim.fn.termopen("lazygit", { on_exit = function() window:close() end })
+			end,
+			on_enter = function() vim.cmd("startinsert") end,
 			keymap = {
 				{
 					cmd = "<A-g>",
-					mode = { "i", "n", "t" },
+					mode = { "n", "t" },
 					key = "<CMD>Lazygit<CR>",
+				},
+			},
+		},
+		btop = {
+			hidden = true,
+			window_theme = require("utils.theme").default_window_theme(),
+			command = "btop",
+			user_command = "Btop",
+			on_create = function(window)
+				vim.fn.termopen("btop", { on_exit = function() window:close() end })
+			end,
+			on_enter = function() vim.cmd("startinsert") end,
+			keymap = {
+				{
+					cmd = "<A-b>",
+					mode = { "n", "t" },
+					key = "<CMD>Btop<CR>",
 				},
 			},
 		},
@@ -22,10 +43,12 @@ M.setup = function(user_opts)
 			hidden = true,
 			window_theme = require("utils.theme").default_window_theme(),
 			user_command = "Term",
+			on_create = function() vim.cmd("term") end,
+			on_enter = function() vim.cmd("startinsert") end,
 			keymap = {
 				{
 					cmd = "<A-1>",
-					mode = { "i", "n", "t" },
+					mode = { "n", "t" },
 					key = "<CMD>Term<CR>",
 				},
 			},
@@ -38,14 +61,8 @@ M.setup = function(user_opts)
 		local window = floating.create({
 			hidden = config.hidden,
 			window_theme = config.window_theme,
-			on_create = function(window)
-				if config.command then
-					vim.fn.termopen(config.command, { on_exit = function() window:close() end })
-				else
-					vim.cmd("term")
-				end
-			end,
-			on_enter = function() vim.cmd("startinsert") end,
+			on_create = config.on_create,
+			on_enter = config.on_enter
 		})
 
 		vim.api.nvim_create_user_command(config.user_command, function()
