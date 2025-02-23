@@ -50,7 +50,7 @@ setmetatable(M.windows, { __mode = "v" })
 --- This method should create a floating window.
 --- @param config terminale.floating.FloatingConfig
 --- @return terminale.floating.Window
-M.create = function(config)
+function M.create(config)
 	config.focus = config.focus == nil and true or config.focus
 	config.hidden = config.hidden == nil and false or config.hidden
 	return {
@@ -147,7 +147,7 @@ end
 --- Function to validate a window index.
 --- @param index number
 --- @return boolean
-M.is_window_valid = function(index)
+function M.is_window_valid(index)
 	local window = M.windows[index]
 
 	if window and vim.api.nvim_buf_is_valid(window.buf) then
@@ -164,7 +164,7 @@ end
 
 --- Return the last_index window used.
 --- @return terminale.floating.Window|nil
-M.get_last_index_window = function()
+function M.get_last_index_window()
 	if not M.is_window_valid(M.last_index) then return end
 
 	return M.windows[M.last_index]
@@ -172,7 +172,7 @@ end
 
 --- Function to toggle a window by default this method should toggle the last_index window opened.
 --- @param index? number
-M.toggle_window = function(index)
+function M.toggle_window(index)
 	index = index or M.last_index
 
 	if not M.is_window_valid(index) then return end
@@ -181,7 +181,7 @@ end
 
 --- Function to close a window by default this method should close the last_index window opened.
 --- @param index? number
-M.close_window = function(index)
+function M.close_window(index)
 	index = index or M.last_index
 
 	if not M.is_window_valid(index) then return end
@@ -190,7 +190,7 @@ end
 
 --- Function to hide a window by default this method should hide the last_index window opened.
 --- @param index? number
-M.hide_window = function(index)
+function M.hide_window(index)
 	index = index or M.last_index
 
 	if not M.is_window_valid(index) then return end
@@ -199,7 +199,7 @@ end
 
 --- Function to show a window by default this method should show the last_index window opened.
 --- @param index? number
-M.show_window = function(index)
+function M.show_window(index)
 	index = index or M.last_index
 
 	if not M.is_window_valid(index) then return end
@@ -208,7 +208,7 @@ end
 
 --- Function to toggle or setup a window.
 --- @param window terminale.floating.Window
-M.toggle_or_setup = function(window)
+function M.toggle_or_setup(window)
 	if window:exists() then
 		window:toggle()
 	else

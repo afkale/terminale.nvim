@@ -28,7 +28,11 @@ M.setup = function(user_opts)
 			command = "btop",
 			user_command = "Btop",
 			on_create = function(window)
-				vim.fn.termopen("btop", { on_exit = function() window:close() end })
+				vim.cmd("term")
+				vim.api.nvim_create_autocmd("TermClose", {
+					buffer = window.buf,
+					callback = function() window:close() end
+				})
 			end,
 			on_enter = function() vim.cmd("startinsert") end,
 			keymap = {
@@ -43,7 +47,9 @@ M.setup = function(user_opts)
 			hidden = true,
 			window_theme = require("terminale.theme").default_window_theme(),
 			user_command = "Term",
-			on_create = function() vim.cmd("term") end,
+			on_create = function(window)
+				vim.fn.termopen("fish", { on_exit = function() window:close() end })
+			end,
 			on_enter = function() vim.cmd("startinsert") end,
 			keymap = {
 				{
