@@ -7,7 +7,7 @@ M.setup = function(user_opts)
 	opts = vim.tbl_deep_extend("force", {
 		lazygit = {
 			hidden = true,
-			window_theme = require("utils.theme").default_window_theme(),
+			window_theme = require("terminale.theme").default_window_theme(),
 			command = "lazygit",
 			user_command = "Lazygit",
 			on_create = function(window)
@@ -24,7 +24,7 @@ M.setup = function(user_opts)
 		},
 		btop = {
 			hidden = true,
-			window_theme = require("utils.theme").default_window_theme(),
+			window_theme = require("terminale.theme").default_window_theme(),
 			command = "btop",
 			user_command = "Btop",
 			on_create = function(window)
@@ -41,7 +41,7 @@ M.setup = function(user_opts)
 		},
 		term = {
 			hidden = true,
-			window_theme = require("utils.theme").default_window_theme(),
+			window_theme = require("terminale.theme").default_window_theme(),
 			user_command = "Term",
 			on_create = function() vim.cmd("term") end,
 			on_enter = function() vim.cmd("startinsert") end,
@@ -55,7 +55,7 @@ M.setup = function(user_opts)
 		},
 	}, opts)
 
-	local floating = require("utils.floating")
+	local floating = require("terminale.floating")
 
 	for _, config in pairs(opts) do
 		local window = floating.create({

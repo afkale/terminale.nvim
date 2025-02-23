@@ -1,27 +1,27 @@
-local buffer = require("utils.buffer")
+local buffer = require("terminale.buffer")
 
---- @class terminale.utils.floating.Floating
---- @field windows terminale.utils.floating.Window[]
+--- @class terminale.floating.Floating
+--- @field windows terminale.floating.Window[]
 --- @field last_index number
---- @field create fun(config: terminale.utils.floating.FloatingConfig): terminale.utils.floating.Window
---- @field get_last_index_window fun(): terminale.utils.floating.Window|nil
+--- @field create fun(config: terminale.floating.FloatingConfig): terminale.floating.Window
+--- @field get_last_index_window fun(): terminale.floating.Window|nil
 --- @field is_window_valid fun(index: number): boolean
 --- @field hide_window fun(index: number|nil)
 --- @field close_window fun(index: number|nil)
 --- @field toggle_window fun(index: number|nil)
 --- @field show_window fun(index: number|nil)
---- @field toggle_or_setup fun(window: terminale.utils.floating.Window)
+--- @field toggle_or_setup fun(window: terminale.floating.Window)
 
---- @class terminale.utils.floating.FloatingConfig
+--- @class terminale.floating.FloatingConfig
 --- @field buf? number
 --- @field win? number
 --- @field hidden? boolean
 --- @field focus? boolean
---- @field window_theme terminale.utils.theme.WindowTheme
---- @field on_enter? fun(window: terminale.utils.floating.Window):nil
---- @field on_create? fun(window: terminale.utils.floating.Window):nil
+--- @field window_theme terminale.theme.WindowTheme
+--- @field on_enter? fun(window: terminale.floating.Window):nil
+--- @field on_create? fun(window: terminale.floating.Window):nil
 
---- @class terminale.utils.floating.Window
+--- @class terminale.floating.Window
 --- @field buf? number
 --- @field win? number
 --- @field index? number
@@ -38,7 +38,7 @@ local buffer = require("utils.buffer")
 --- @field setup fun(self):nil
 --- @field exists fun(self):boolean
 
----@type terminale.utils.floating.Floating
+---@type terminale.floating.Floating
 local M = {
 	windows = {},
 	last_index = -1
@@ -48,8 +48,8 @@ local M = {
 setmetatable(M.windows, { __mode = "v" })
 
 --- This method should create a floating window.
---- @param config terminale.utils.floating.FloatingConfig
---- @return terminale.utils.floating.Window
+--- @param config terminale.floating.FloatingConfig
+--- @return terminale.floating.Window
 M.create = function(config)
 	config.focus = config.focus == nil and true or config.focus
 	config.hidden = config.hidden == nil and false or config.hidden
@@ -163,7 +163,7 @@ M.is_window_valid = function(index)
 end
 
 --- Return the last_index window used.
---- @return terminale.utils.floating.Window|nil
+--- @return terminale.floating.Window|nil
 M.get_last_index_window = function()
 	if not M.is_window_valid(M.last_index) then return end
 
@@ -207,7 +207,7 @@ M.show_window = function(index)
 end
 
 --- Function to toggle or setup a window.
---- @param window terminale.utils.floating.Window
+--- @param window terminale.floating.Window
 M.toggle_or_setup = function(window)
 	if window:exists() then
 		window:toggle()

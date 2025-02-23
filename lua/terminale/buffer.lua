@@ -1,9 +1,9 @@
---- @class terminale.utils.buffer.Buffer
+--- @class terminale.buffer.Buffer
 --- @field create fun(buf: number|nil): number
 --- @field close_win fun(win: number): nil
 --- @field close_buf fun(buf: number, force: boolean): nil
 
---- @type terminale.utils.buffer.Buffer
+--- @type terminale.buffer.Buffer
 local M = {}
 
 --- This function validates a buffer. If the buffer is not valid, it returns a new valid buffer.
