@@ -135,6 +135,11 @@ M.create = function(config)
 			self.buf = buffer.create(self.buf)
 			self.win = not self.hidden and vim.api.nvim_open_win(self.buf, true, self.win_config) or -1
 
+			-- Execute command to do on enter when buf focused.
+			vim.api.nvim_create_autocmd("BufWinEnter", {
+				buffer = self.buf, callback = function() self.on_enter(self) end,
+			})
+
 			-- Execute on_enter and on_create methods
 			if self.created then
 				self.on_create(self)
