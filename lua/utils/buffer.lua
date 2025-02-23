@@ -1,5 +1,7 @@
 --- @class terminale.utils.buffer.Buffer
 --- @field create fun(buf: number|nil): number
+--- @field close_win fun(win: number): nil
+--- @field close_buf fun(buf: number, force: boolean): nil
 
 --- @type terminale.utils.buffer.Buffer
 local M = {}
@@ -17,6 +19,23 @@ M.create = function(buf)
 
 	-- If the buffer is not valid return a new one.
 	return vim.api.nvim_create_buf(false, true)
+end
+
+--- Close window if valid.
+--- @param win number
+M.close_win = function(win)
+	if vim.api.nvim_win_is_valid(win) then
+		vim.api.nvim_win_close(win, true)
+	end
+end
+
+--- Close buffer if valid.
+---@param buf number
+---@param force boolean
+M.close_buf = function(buf, force)
+	if vim.api.nvim_buf_is_valid(buf) then
+		vim.api.nvim_buf_delete(buf, { force = force })
+	end
 end
 
 return M

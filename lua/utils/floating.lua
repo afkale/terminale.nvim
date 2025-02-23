@@ -47,7 +47,6 @@ local M = {
 -- This will remove the unavailable instances of windows stored in the windows state.
 setmetatable(M.windows, { __mode = "v" })
 
-
 --- This method should create a floating window.
 --- @param config terminale.utils.floating.FloatingConfig
 --- @return terminale.utils.floating.Window
@@ -103,12 +102,8 @@ M.create = function(config)
 		end,
 		close = function(self)
 			-- Close the window and delete the buffer
-			if vim.api.nvim_win_is_valid(self.win) then
-				vim.api.nvim_win_close(self.win, true)
-			end
-			if vim.api.nvim_buf_is_valid(self.buf) then
-				vim.api.nvim_buf_delete(self.buf, { force = true })
-			end
+			buffer.close_win(self.win)
+			buffer.close_buf(self.buf, true)
 
 			-- Remove window from M.windows using the provided index
 			if M.windows[self.index] == self then
@@ -132,13 +127,9 @@ M.create = function(config)
 			-- Add the window to the list and get its index
 			self.index = #M.windows + 1
 
+			-- Create buffer and window.
 			self.buf = buffer.create(self.buf)
 			self.win = not self.hidden and vim.api.nvim_open_win(self.buf, true, self.win_config) or -1
-
-			-- Execute command to do on enter when buf focused.
-			vim.api.nvim_create_autocmd("BufWinEnter", {
-				buffer = self.buf, callback = function() self.on_enter(self) end,
-			})
 
 			-- Execute on_enter and on_create methods
 			if self.created then
@@ -152,7 +143,6 @@ M.create = function(config)
 		end
 	}
 end
-
 
 --- Function to validate a window index.
 --- @param index number
