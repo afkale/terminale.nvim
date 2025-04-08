@@ -53,6 +53,7 @@ setmetatable(M.windows, { __mode = "v" })
 function M.create(config)
 	config.focus = config.focus == nil and true or config.focus
 	config.hidden = config.hidden == nil and false or config.hidden
+
 	return {
 		buf = config.buf,
 		focus = config.focus,
@@ -62,7 +63,7 @@ function M.create(config)
 		on_create = config.on_create or function() end,
 		on_enter = config.on_enter or function() end,
 		exists = function(self)
-			return self.index and M.windows[self.index]
+			return self.index ~= nil and M.windows[self.index] ~= nil
 		end,
 		hide = function(self)
 			-- Check if the buffer is already hidden, if is hidden just drop it.
@@ -101,10 +102,6 @@ function M.create(config)
 			if self.hidden then self:show() else self:hide() end
 		end,
 		close = function(self)
-			-- Close the window and delete the buffer
-			buffer.close_win(self.win)
-			buffer.close_buf(self.buf, true)
-
 			-- Remove window from M.windows using the provided index
 			if M.windows[self.index] == self then
 				table.remove(M.windows, self.index)
@@ -119,6 +116,10 @@ function M.create(config)
 					M.last_index = math.min(M.last_index, #M.windows)
 				end
 			end
+
+			-- Close the window and delete the buffer
+			buffer.close_win(self.win)
+			buffer.close_buf(self.buf, true)
 
 			-- Destroy window index.
 			self.index = nil

@@ -11,12 +11,15 @@ M.setup = function(user_opts)
 			command = "lazygit",
 			user_command = "Lazygit",
 			on_create = function(window)
-				vim.fn.termopen("lazygit", { on_exit = function() window:close() end })
+				local lazygit_config_dir = vim.fn.stdpath("config") .. "/lazygit"
+				local lazygit_command = "lazygit --use-config-dir " .. lazygit_config_dir
+
+				vim.fn.termopen(lazygit_command, { on_exit = function() window:close() end })
 			end,
 			on_enter = function() vim.cmd("startinsert") end,
 			keymap = {
 				{
-					cmd = "<A-g>",
+					cmd = "<leader>gg",
 					mode = { "n", "t" },
 					key = "<CMD>Lazygit<CR>",
 				},
@@ -28,11 +31,7 @@ M.setup = function(user_opts)
 			command = "btop",
 			user_command = "Btop",
 			on_create = function(window)
-				vim.cmd("term")
-				vim.api.nvim_create_autocmd("TermClose", {
-					buffer = window.buf,
-					callback = function() window:close() end
-				})
+				vim.fn.termopen("btop", { on_exit = function() window:close() end })
 			end,
 			on_enter = function() vim.cmd("startinsert") end,
 			keymap = {
