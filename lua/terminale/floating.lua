@@ -91,6 +91,9 @@ function M.create(config)
 				-- If the window is not already created (e.g., hidden and never shown), open it with the saved configuration
 				self.win = vim.api.nvim_open_win(self.buf, self.focus, self.win_config)
 
+				if not vim.api.nvim_win_is_valid(self.win) then
+					error("Failed to create window")
+				end
 				-- If the window was never shown before (meaning 'created' is false), we will execute on_create callback
 				if not self.created then
 					self.on_create(self) -- Execute the user-defined or default 'on_create' function
