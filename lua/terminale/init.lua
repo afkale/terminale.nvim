@@ -5,56 +5,31 @@ M.setup = function(user_opts)
 
 	-- Default options with a flexible configuration for multiple commands
 	opts = vim.tbl_deep_extend("force", {
-		lazygit = {
-			hidden = true,
-			window_theme = require("terminale.theme").default_window_theme(),
-			command = "lazygit",
-			user_command = "Lazygit",
-			on_create = function(window)
-				local lazygit_config_dir = vim.fn.stdpath("config") .. "/lazygit"
-				local lazygit_command = "lazygit --use-config-dir " .. lazygit_config_dir
-
-				vim.fn.termopen(lazygit_command, { on_exit = function() window:close() end })
-			end,
-			on_enter = function() vim.cmd("startinsert") end,
-			keymap = {
-				{
-					cmd = "<leader>gg",
-					mode = { "n", "t" },
-					key = "<CMD>Lazygit<CR>",
-				},
-			},
-		},
-		btop = {
-			hidden = true,
-			window_theme = require("terminale.theme").default_window_theme(),
-			command = "btop",
-			user_command = "Btop",
-			on_create = function(window)
-				vim.fn.termopen("btop", { on_exit = function() window:close() end })
-			end,
-			on_enter = function() vim.cmd("startinsert") end,
-			keymap = {
-				{
-					cmd = "<A-b>",
-					mode = { "n", "t" },
-					key = "<CMD>Btop<CR>",
-				},
-			},
-		},
 		term = {
 			hidden = true,
-			window_theme = require("terminale.theme").default_window_theme(),
+			window_theme = "default",
+			command = "fish -i",
 			user_command = "Term",
-			on_create = function(window)
-				vim.fn.termopen("fish", { on_exit = function() window:close() end })
-			end,
 			on_enter = function() vim.cmd("startinsert") end,
 			keymap = {
 				{
 					cmd = "<A-1>",
 					mode = { "n", "t" },
 					key = "<CMD>Term<CR>",
+				},
+			},
+		},
+		boterm = {
+			hidden = true,
+			window_theme = "bottom",
+			command = "fish -i",
+			user_command = "Boterm",
+			on_enter = function() vim.cmd("startinsert") end,
+			keymap = {
+				{
+					cmd = "<A-2>",
+					mode = { "n", "t" },
+					key = "<CMD>Boterm<CR>",
 				},
 			},
 		},
@@ -65,6 +40,7 @@ M.setup = function(user_opts)
 	for _, config in pairs(opts) do
 		local window = floating.create({
 			hidden = config.hidden,
+			command = config.command,
 			window_theme = config.window_theme,
 			on_create = config.on_create,
 			on_enter = config.on_enter

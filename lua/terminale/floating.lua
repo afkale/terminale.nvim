@@ -1,4 +1,5 @@
 local buffer = require("terminale.buffer")
+local theme = require("terminale.theme")
 
 --- @class terminale.floating.Floating
 --- @field windows terminale.floating.Window[]
@@ -17,7 +18,8 @@ local buffer = require("terminale.buffer")
 --- @field win? number
 --- @field hidden? boolean
 --- @field focus? boolean
---- @field window_theme terminale.theme.WindowTheme
+--- @field command? string
+--- @field window_theme vim.api.keyset.win_config|string
 --- @field on_enter? fun(window: terminale.floating.Window):nil
 --- @field on_create? fun(window: terminale.floating.Window):nil
 
@@ -39,10 +41,7 @@ local buffer = require("terminale.buffer")
 --- @field exists fun(self):boolean
 
 ---@type terminale.floating.Floating
-local M = {
-	windows = {},
-	last_index = -1
-}
+local M = { windows = {}, last_index = -1 }
 
 -- This will remove the unavailable instances of windows stored in the windows state.
 setmetatable(M.windows, { __mode = "v" })
@@ -59,8 +58,15 @@ function M.create(config)
 		focus = config.focus,
 		hidden = config.hidden,
 		created = not config.hidden,
-		win_config = config.window_theme.win_config,
-		on_create = config.on_create or function() end,
+		win_config = theme.get_window_theme(config.window_theme),
+		on_create = config.on_create or function(self)
+			vim.fn.jobstart(config.command, {
+				term = true, on_exit = function() self:close() end
+			})
+			vim.api.nvim_create_autocmd("BufLeave", {
+				buffer = self.buf, callback = function() self:hide() end,
+			})
+		end,
 		on_enter = config.on_enter or function() end,
 		exists = function(self)
 			return self.index ~= nil and M.windows[self.index] ~= nil
