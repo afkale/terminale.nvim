@@ -63,8 +63,12 @@ function M.create(config)
 			vim.fn.jobstart(config.command, {
 				term = true, on_exit = function() self:close() end
 			})
+
 			vim.api.nvim_create_autocmd("BufLeave", {
-				buffer = self.buf, callback = function() self:hide() end,
+				buffer = self.buf,
+				callback = function()
+					if self.index ~= nil then self:hide() end
+				end,
 			})
 		end,
 		on_enter = config.on_enter or function() end,
@@ -91,9 +95,6 @@ function M.create(config)
 				-- If the window is not already created (e.g., hidden and never shown), open it with the saved configuration
 				self.win = vim.api.nvim_open_win(self.buf, self.focus, self.win_config)
 
-				if not vim.api.nvim_win_is_valid(self.win) then
-					error("Failed to create window")
-				end
 				-- If the window was never shown before (meaning 'created' is false), we will execute on_create callback
 				if not self.created then
 					self.on_create(self) -- Execute the user-defined or default 'on_create' function
@@ -126,12 +127,12 @@ function M.create(config)
 				end
 			end
 
+			-- Destroy window index.
+			self.index = nil
+
 			-- Close the window and delete the buffer
 			buffer.close_win(self.win)
 			buffer.close_buf(self.buf, true)
-
-			-- Destroy window index.
-			self.index = nil
 		end,
 		setup = function(self)
 			-- Add the window to the list and get its index
